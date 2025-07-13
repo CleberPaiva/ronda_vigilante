@@ -24,7 +24,7 @@ class ApiService {
   // O login é um caso especial, pois não precisa de token
   Future<Map<String, dynamic>> login(String username, String password) async {
     final response = await http.post(
-      Uri.parse('$API_BASE_URL/api/login/'),
+      Uri.parse('$apiBaseUrl/api/login/'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: json.encode({'username': username, 'password': password}),
     );
@@ -44,7 +44,7 @@ class ApiService {
     final headers = await _getAuthHeaders(); // Usa o método privado
     final body = json.encode({'latitude': latitude, 'longitude': longitude});
     final response = await http.post(
-        Uri.parse('$API_BASE_URL/api/rondas/iniciar/'),
+        Uri.parse('$apiBaseUrl/api/rondas/iniciar/'),
         headers: headers,
         body: body);
 
@@ -65,7 +65,7 @@ class ApiService {
       'data_hora_registro': dataHora,
     });
     final response = await http.post(
-        Uri.parse('$API_BASE_URL/api/rondas/$rondaId/registrar-ponto/'),
+        Uri.parse('$apiBaseUrl/api/rondas/$rondaId/registrar-ponto/'),
         headers: headers,
         body: body);
 
@@ -77,7 +77,7 @@ class ApiService {
 
   Future<List<dynamic>> getRondas() async {
     final headers = await _getAuthHeaders();
-    final response = await http.get(Uri.parse('$API_BASE_URL/api/rondas/'),
+    final response = await http.get(Uri.parse('$apiBaseUrl/api/rondas/'),
         headers: headers);
 
     if (response.statusCode == 200) {

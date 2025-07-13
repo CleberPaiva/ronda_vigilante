@@ -6,8 +6,11 @@ import 'package:ronda_vigilante/screens/home_screen.dart';
 import 'package:ronda_vigilante/screens/login_screen.dart';
 
 class AuthCheckScreen extends StatefulWidget {
+  // 1. Adicione um construtor const com a chave (key)
+  const AuthCheckScreen({super.key});
+
   @override
-  _AuthCheckScreenState createState() => _AuthCheckScreenState();
+  State<AuthCheckScreen> createState() => _AuthCheckScreenState();
 }
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
@@ -21,26 +24,29 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken');
 
-    // Aguarda um instante para a transição de tela ser mais suave
-    await Future.delayed(Duration(seconds: 1));
+    // É uma boa prática declarar Durations como const
+    await Future.delayed(const Duration(seconds: 1));
+
+    // 2. Verifique se o widget ainda está na árvore de widgets antes de usar seu contexto.
+    if (!mounted) return;
 
     if (token != null) {
-      // Se encontrou um token, vai direto para a tela principal
+      // Supondo que HomeScreen() pode ser const. Se sim, adicione para melhorar a performance.
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => HomeScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      // Se não encontrou, vai para a tela de login
+      // Supondo que LoginScreen() pode ser const.
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Exibe uma tela de carregamento enquanto verifica o token
-    return Scaffold(
+    // 3. Use const para widgets estáticos para melhorar a performance.
+    return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),
       ),

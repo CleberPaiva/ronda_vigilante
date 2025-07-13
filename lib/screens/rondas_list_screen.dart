@@ -1,12 +1,14 @@
-// lib/screens/rondas_list_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ronda_vigilante/services/api_service.dart';
 
 class RondasListScreen extends StatefulWidget {
+  // ✅ 1. Adicionado construtor const com chave (key)
+  const RondasListScreen({super.key});
+
   @override
-  _RondasListScreenState createState() => _RondasListScreenState();
+  // ✅ Corrigido o tipo de retorno para o linter
+  State<RondasListScreen> createState() => _RondasListScreenState();
 }
 
 class _RondasListScreenState extends State<RondasListScreen> {
@@ -22,20 +24,26 @@ class _RondasListScreenState extends State<RondasListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Rondas Realizadas')),
+      // ✅ 2. Adicionado 'const' para performance
+      appBar: AppBar(title: const Text('Rondas Realizadas')),
       body: FutureBuilder<List<dynamic>>(
         future: _rondasFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            // ✅ 2. Adicionado 'const'
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-                child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('Erro ao carregar dados: ${snapshot.error}',
-                        textAlign: TextAlign.center)));
+              child: Padding(
+                // ✅ 2. Adicionado 'const'
+                padding: const EdgeInsets.all(16.0),
+                child: Text('Erro ao carregar dados: ${snapshot.error}',
+                    textAlign: TextAlign.center),
+              ),
+            );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nenhuma ronda encontrada.'));
+            // ✅ 2. Adicionado 'const'
+            return const Center(child: Text('Nenhuma ronda encontrada.'));
           }
           final rondas = snapshot.data!;
           return RefreshIndicator(
@@ -52,9 +60,13 @@ class _RondasListScreenState extends State<RondasListScreen> {
                 final formattedDate =
                     DateFormat('dd/MM/yyyy HH:mm').format(dataInicio.toLocal());
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  // ✅ 2. Adicionado 'const'
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: ListTile(
-                    leading: Icon(Icons.route, color: Colors.blue),
+                    // ✅ 2. Adicionado 'const'
+                    leading: const Icon(Icons.route, color: Colors.blue),
+                    // Os Text widgets abaixo não podem ser const, pois usam dados variáveis
                     title: Text('Ronda #${ronda['id']}'),
                     subtitle: Text(
                         'Iniciada em: $formattedDate\nPor: ${ronda['vigilante_username']}'),

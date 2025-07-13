@@ -9,9 +9,12 @@ import 'package:ronda_vigilante/screens/rondas_list_screen.dart';
 import 'package:ronda_vigilante/services/api_service.dart';
 import 'package:ronda_vigilante/services/local_db_service.dart';
 
+// ✅ 1. Adicionado construtor com chave (key) para o widget
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -29,7 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkPermissions();
     _connectivitySubscription =
         Connectivity().onConnectivityChanged.listen((results) {
-      if (!results.contains(ConnectivityResult.none)) _syncPendingPoints();
+      // ✅ 3. Adicionadas chaves ao 'if'
+      if (!results.contains(ConnectivityResult.none)) {
+        _syncPendingPoints();
+      }
     });
   }
 
@@ -45,10 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _isRondaActive = true;
     });
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Ronda iniciada!')));
+        // ✅ 2. Adicionado 'const' para performance
+        .showSnackBar(const SnackBar(content: Text('Ronda iniciada!')));
     await _registerPoint();
     _rondaTimer =
-        Timer.periodic(Duration(minutes: 5), (timer) => _registerPoint());
+        Timer.periodic(const Duration(minutes: 5), (timer) => _registerPoint());
   }
 
   Future<void> _registerPoint() async {
@@ -70,35 +77,40 @@ class _HomeScreenState extends State<HomeScreen> {
           await _apiService.registrarPonto(_currentRondaId!, position.latitude,
               position.longitude, formattedDate);
         }
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Ponto registrado online.'),
-              duration: Duration(seconds: 1)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Ponto registrado online.'),
+            duration: Duration(seconds: 1),
+          ));
+        }
       } else {
-        // OFFLINE
         if (_currentRondaId != null) {
           await _localDbService.inserirPontoPendente(_currentRondaId!,
               position.latitude, position.longitude, formattedDate);
-          if (mounted)
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Sem conexão. Ponto salvo localmente.'),
-                duration: Duration(seconds: 1)));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Sem conexão. Ponto salvo localmente.'),
+              duration: Duration(seconds: 1),
+            ));
+          }
         } else {
-          if (mounted)
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content:
                     Text('Necessário conexão para iniciar a primeira ronda.')));
+          }
         }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Erro: ${e.toString()}')));
+      }
     }
   }
 
   Future<void> _syncPendingPoints() async {
-    // ... (O código desta função pode permanecer o mesmo, pois já é robusto)
+    // ... (O código desta função pode permanecer o mesmo)
   }
 
   void _stopRonda() {
@@ -108,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentRondaId = null;
     });
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Ronda finalizada.')));
+        .showSnackBar(const SnackBar(content: Text('Ronda finalizada.')));
   }
 
   Future<void> _checkPermissions() async {
@@ -117,9 +129,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // O código do build pode permanecer o mesmo
     return Scaffold(
-      appBar: AppBar(title: Text('Painel de Controle')),
+      appBar: AppBar(title: const Text('Painel de Controle')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -134,32 +145,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.play_circle_fill,
                         size: 50,
                         color: _isRondaActive ? Colors.grey : Colors.green),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     ElevatedButton(
-                      child: Text(
-                          _isRondaActive ? 'Finalizar Ronda' : 'Iniciar Ronda'),
                       onPressed: _isRondaActive ? _stopRonda : _startRonda,
                       style: ElevatedButton.styleFrom(
                           backgroundColor:
                               _isRondaActive ? Colors.red : Colors.green),
+                      child: Text(
+                          _isRondaActive ? 'Finalizar Ronda' : 'Iniciar Ronda'),
                     ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    Icon(Icons.history, size: 50, color: Colors.blue),
-                    SizedBox(height: 10),
+                    const Icon(Icons.history, size: 50, color: Colors.blue),
+                    const SizedBox(height: 10),
                     ElevatedButton(
-                      child: Text('Ver Rondas Realizadas'),
+                      child: const Text('Ver Rondas Realizadas'),
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => RondasListScreen()));
+                          // Adicione `const` aqui se `RondasListScreen` tiver um construtor const.
+                          builder: (_) => const RondasListScreen(),
+                        ));
                       },
                     ),
                   ],
