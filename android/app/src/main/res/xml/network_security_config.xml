@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Para emulador Android -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">192.168.0.0/16</domain> <!-- Permite IPs na sua rede local, como 192.168.1.5 -->
+    </domain-config>
+</network-security-config>
