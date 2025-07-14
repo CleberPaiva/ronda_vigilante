@@ -2,13 +2,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:ronda_vigilante/screens/auth_check_screen.dart';
+import 'package:ronda_vigilante/services/background_service.dart';
 
-void main() {
-  runApp(const MyApp()); // Adicione const aqui
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar o WorkManager
+  await BackgroundService.initialize();
+  
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // Adicione um construtor const com a chave (key)
   const MyApp({super.key});
 
   @override
@@ -20,7 +25,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // Use const no widget `home` para melhor performance
       home: const AuthCheckScreen(),
     );
   }

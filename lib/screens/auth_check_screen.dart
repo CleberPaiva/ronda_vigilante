@@ -1,3 +1,4 @@
+
 // lib/screens/auth_check_screen.dart
 
 import 'package:flutter/material.dart';

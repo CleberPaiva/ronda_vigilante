@@ -1,3 +1,7 @@
+
+// lib/auth_service.dart
+
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Gerencia a autenticação do usuário, lidando com o armazenamento,
@@ -12,6 +16,9 @@ class AuthService {
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
+    
+    // Debug: verificar se o token foi salvo
+    print('[DEBUG] Token salvo: ${token.substring(0, 20)}...');
   }
 
   /// Busca o token de autenticação que está salvo localmente.
