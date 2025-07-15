@@ -1,3 +1,5 @@
+// lib/services/background_service.dart
+
 import 'dart:convert';
 import 'package:workmanager/workmanager.dart';
 import 'package:geolocator/geolocator.dart';
@@ -28,22 +30,33 @@ void callbackDispatcher() {
 // Função para registrar ponto de ronda em background
 Future<bool> _registerRondaPoint() async {
   try {
-    // 1. Verificar se há uma ronda ativa
+    print('[BACKGROUND] === INICIANDO REGISTRO DE PONTO ===');
+    
     final prefs = await SharedPreferences.getInstance();
     final rondaId = prefs.getString('active_ronda_id');
     final token = prefs.getString('auth_token');
     
+    print('[BACKGROUND] RondaId: $rondaId');
+    print('[BACKGROUND] Token presente: ${token != null}');
+    
     if (rondaId == null || token == null) {
-      print('[BACKGROUND] Nenhuma ronda ativa ou token não encontrado');
+      print('[BACKGROUND] ❌ Faltam dados: RondaId=$rondaId, Token=${token != null}');
       return false;
     }
     
-    // 2. Obter localização atual
+    print('[BACKGROUND] 📍 Obtendo localização...');
+    
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
     
-    // 3. Enviar ponto para o backend
+    print('[BACKGROUND] 📍 Localização obtida: ${position.latitude}, ${position.longitude}');
+    
+    // Sempre enviar data_hora_registro (obrigatório)
+    final now = DateTime.now();
+    
+    print('[BACKGROUND] 🌐 Enviando para servidor...');
+    
     final response = await http.post(
       Uri.parse('${apiBaseUrl}/api/rondas/$rondaId/registrar-ponto/'),
       headers: {
@@ -53,19 +66,23 @@ Future<bool> _registerRondaPoint() async {
       body: jsonEncode({
         'latitude': position.latitude,
         'longitude': position.longitude,
-        'data_hora_registro': DateTime.now().toIso8601String(),
+        'data_hora_registro': now.toIso8601String(),
       }),
     ).timeout(const Duration(seconds: 30));
     
+    print('[BACKGROUND] 🌐 Resposta do servidor: ${response.statusCode}');
+    
     if (response.statusCode == 201) {
-      print('[BACKGROUND] Ponto registrado com sucesso: ${position.latitude}, ${position.longitude}');
+      print('[BACKGROUND] ✅ Ponto registrado com sucesso!');
+      print('[BACKGROUND] Coordenadas: ${position.latitude}, ${position.longitude}');
+      print('[BACKGROUND] Horário: ${now.toIso8601String()}');
       return true;
     } else {
-      print('[BACKGROUND] Erro ao registrar ponto: ${response.statusCode} - ${response.body}');
+      print('[BACKGROUND] ❌ Erro: ${response.statusCode} - ${response.body}');
       return false;
     }
   } catch (e) {
-    print('[BACKGROUND] Erro ao registrar ponto: $e');
+    print('[BACKGROUND] ❌ Exceção: $e');
     return false;
   }
 }
@@ -84,18 +101,27 @@ class BackgroundService {
   /// Agenda o registro periódico de pontos de ronda
   static Future<void> scheduleRondaPoints(int rondaId) async {
     try {
-      // Salvar ID da ronda ativa
+      print('[BACKGROUND] Configurando agendamento para ronda $rondaId');
+      
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('active_ronda_id', rondaId.toString());
       
-      // Cancelar tarefas anteriores
+      // Sincronizar token do AuthService para o background
+      final authToken = prefs.getString('authToken');
+      if (authToken != null) {
+        await prefs.setString('auth_token', authToken);
+        print('[BACKGROUND] Token sincronizado para background service');
+      } else {
+        print('[BACKGROUND] ⚠️ Token não encontrado no AuthService');
+      }
+      
       await Workmanager().cancelAll();
       
-      // Agendar nova tarefa a cada 2 minutos
+      // Agendar nova tarefa a cada 3 minutos
       await Workmanager().registerPeriodicTask(
         _rondaTaskName,
         _rondaTaskName,
-        frequency: const Duration(minutes: 2),
+        frequency: const Duration(minutes: 3),
         constraints: Constraints(
           networkType: NetworkType.connected,
           requiresBatteryNotLow: false,
@@ -108,9 +134,9 @@ class BackgroundService {
         },
       );
       
-      print('[BACKGROUND] Tarefa de ronda agendada para ronda $rondaId');
+      print('[BACKGROUND] ✅ Tarefa de ronda agendada para ronda $rondaId a cada 3 minutos');
     } catch (e) {
-      print('[BACKGROUND] Erro ao agendar tarefa: $e');
+      print('[BACKGROUND] ❌ Erro ao agendar tarefa: $e');
     }
   }
   
@@ -119,13 +145,13 @@ class BackgroundService {
     try {
       await Workmanager().cancelAll();
       
-      // Remover ID da ronda ativa
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('active_ronda_id');
+      await prefs.remove('auth_token');
       
-      print('[BACKGROUND] Tarefas de ronda canceladas');
+      print('[BACKGROUND] ✅ Tarefas de ronda canceladas');
     } catch (e) {
-      print('[BACKGROUND] Erro ao cancelar tarefas: $e');
+      print('[BACKGROUND] ❌ Erro ao cancelar tarefas: $e');
     }
   }
   
@@ -135,4 +161,63 @@ class BackgroundService {
     final rondaId = prefs.getString('active_ronda_id');
     return rondaId != null ? int.tryParse(rondaId) : null;
   }
-} 
+  
+  /// Método para testar o registro manual
+  static Future<bool> testBackgroundTask() async {
+    try {
+      print('[TEST] 🧪 Executando teste manual do background...');
+      final result = await _registerRondaPoint();
+      print('[TEST] 🧪 Resultado: $result');
+      return result;
+    } catch (e) {
+      print('[TEST] ❌ Erro no teste: $e');
+      return false;
+    }
+  }
+  
+  /// Verifica se o token está sincronizado
+  static Future<bool> isTokenSynced() async {
+    final prefs = await SharedPreferences.getInstance();
+    final authToken = prefs.getString('authToken');
+    final backgroundToken = prefs.getString('auth_token');
+    
+    print('[BACKGROUND] AuthToken presente: ${authToken != null}');
+    print('[BACKGROUND] BackgroundToken presente: ${backgroundToken != null}');
+    print('[BACKGROUND] Tokens sincronizados: ${authToken == backgroundToken}');
+    
+    return authToken != null && backgroundToken != null && authToken == backgroundToken;
+  }
+  
+  /// Força a sincronização do token
+  static Future<void> forceTokenSync() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = prefs.getString('authToken');
+      
+      if (authToken != null) {
+        await prefs.setString('auth_token', authToken);
+        print('[BACKGROUND] ✅ Token sincronizado forçadamente');
+      } else {
+        print('[BACKGROUND] ❌ Nenhum token encontrado para sincronizar');
+      }
+    } catch (e) {
+      print('[BACKGROUND] ❌ Erro ao sincronizar token: $e');
+    }
+  }
+  
+  /// Verifica o status do background service
+  static Future<Map<String, dynamic>> getBackgroundStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rondaId = prefs.getString('active_ronda_id');
+    final authToken = prefs.getString('authToken');
+    final backgroundToken = prefs.getString('auth_token');
+    
+    return {
+      'ronda_ativa': rondaId != null,
+      'ronda_id': rondaId,
+      'auth_token_presente': authToken != null,
+      'background_token_presente': backgroundToken != null,
+      'tokens_sincronizados': authToken == backgroundToken,
+    };
+  }
+}

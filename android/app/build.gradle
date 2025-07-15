@@ -1,3 +1,6 @@
+
+// Local: android/app/build.gradle
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -24,16 +27,15 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.ronda_vigilante"
-    compileSdkVersion flutter.compileSdkVersion
+    compileSdkVersion 35
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
@@ -42,18 +44,56 @@ android {
 
     defaultConfig {
         applicationId "com.example.ronda_vigilante"
-        minSdkVersion 21 // Substitui flutter.minSdkVersion por segurança
-        targetSdkVersion flutter.targetSdkVersion
+        minSdkVersion 21
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-
-        // Habilita suporte a MultiDex
         multiDexEnabled true
+        
+        // Configurações adicionais para o WorkManager
+        manifestPlaceholders = [
+            authApplicationId: applicationId
+        ]
+    }
+
+    signingConfigs {
+        release {
+            // Configure suas chaves de release aqui para produção
+            // keyAlias keystoreProperties['keyAlias']
+            // keyPassword keystoreProperties['keyPassword']
+            // storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            // storePassword keystoreProperties['storePassword']
+        }
     }
 
     buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packagingOptions {
+        pickFirst '**/libflutter.so'
+        pickFirst '**/libapp.so'
+        exclude 'META-INF/proguard/androidx-annotations.pro'
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
         }
     }
 }
@@ -63,7 +103,31 @@ flutter {
 }
 
 dependencies {
-    implementation "androidx.work:work-runtime:2.9.0"
-    implementation "androidx.startup:startup-runtime:1.1.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
+    implementation "androidx.core:core-ktx:1.10.1"
     implementation "androidx.multidex:multidex:2.0.1"
+
+    // WorkManager: runtime puro + extensões Kotlin
+    implementation "androidx.work:work-runtime:2.9.0"
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
+
+    implementation "androidx.lifecycle:lifecycle-process:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.6.2"
+    
+    // UI e suporte Flutter
+    implementation "com.google.android.material:material:1.9.0"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    
+    // Testes
+    testImplementation "junit:junit:4.13.2"
+    androidTestImplementation "androidx.test:runner:1.5.2"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+}
+
+configurations.all {
+    resolutionStrategy {
+        // força as versões usadas em todo o projeto
+        force "androidx.core:core-ktx:1.10.1"
+        force "androidx.work:work-runtime:2.9.0"
+    }
 }

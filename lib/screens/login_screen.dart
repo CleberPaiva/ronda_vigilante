@@ -1,10 +1,10 @@
+
 // lib/screens/login_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:ronda_vigilante/screens/home_screen.dart';
 import 'package:ronda_vigilante/services/api_service.dart';
 import 'package:ronda_vigilante/services/auth_service.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,39 +19,52 @@ class _LoginScreenState extends State<LoginScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
 
-Future<void> _login() async {
-  setState(() {
-    _isLoading = true;
-  });
+  Future<void> _login() async {
+    // Garante que o método não prossiga se o widget for removido
+    if (!mounted) return;
 
-  try {
-    await _apiService.login(
-      _usernameController.text,
-      _passwordController.text,
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
-    final token = await AuthService().getToken(); // ✅ Correção aqui
-    print('[DEBUG] Token salvo após login: $token');
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+    try {
+      await _apiService.login(
+        _usernameController.text,
+        _passwordController.text,
       );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+
+      final token = await AuthService().getToken();
+      print('[DEBUG] Token salvo após login: $token');
+
+      // Checagem de segurança após a operação assíncrona
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      // Checagem de segurança após a operação assíncrona
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      // Checagem de segurança para garantir que o estado só seja atualizado se o widget existir
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +90,7 @@ Future<void> _login() async {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _login,
+                    // ✅ CORREÇÃO: Argumento 'child' movido para o final
                     child: const Text('Entrar'),
                   ),
           ],

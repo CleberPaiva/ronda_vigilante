@@ -6,6 +6,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
+        classpath 'com.android.tools.build:gradle:8.6.0'
         // A versão do Kotlin será gerenciada em outro arquivo
         // A versão do 'com.android.tools.build:gradle' é gerenciada pelo Flutter
     }

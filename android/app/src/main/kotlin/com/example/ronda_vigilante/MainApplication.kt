@@ -1,6 +1,6 @@
+
 package com.example.ronda_vigilante
 
-import android.app.Application
 import android.content.Context
 import androidx.multidex.MultiDex
 import io.flutter.app.FlutterApplication
